@@ -23,8 +23,30 @@ copy the plugins
 paste the plugins in the start of android-> build.gradle.kts <br>
 <img width="1120" height="452" alt="image" src="https://github.com/user-attachments/assets/0db79b8f-28b1-4ae2-931a-71ab9fa9f6bd" />
 
-In your Module (app-level) Gradle file (<project>/<app-module>/build.gradle.kts
-<img width="956" height="449" alt="image" src="https://github.com/user-attachments/assets/1bc1a8f8-ba1e-4936-b902-ccec01edf3f5" />
+In your Module (app-level) Gradle file (android/app/build.gradle.kts
+<img width="956" height="449" alt="image" src="https://github.com/user-attachments/assets/1bc1a8f8-ba1e-4936-b902-ccec01edf3f5" /><br>
+
+---
+now go to VS code and run in the terminal
+```flutter pub get firebase_core```
+```flutter pub add firebase_core```
+
+---
+go to main.dart<br>
+<img width="742" height="294" alt="image" src="https://github.com/user-attachments/assets/d68e3cc1-9adf-4f49-b611-c0917fdbf7c8" />
+
+replace the void main() function:
+```void main() async { 
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(); 
+  runApp(const QuizApp());
+}
+```
+<img width="856" height="261" alt="image" src="https://github.com/user-attachments/assets/a6fb4851-fc42-4dc6-be6f-83816b02a608" />
+
+
+
+
 
 
 
