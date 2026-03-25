@@ -36,12 +36,14 @@ go to main.dart<br>
 <img width="742" height="294" alt="image" src="https://github.com/user-attachments/assets/d68e3cc1-9adf-4f49-b611-c0917fdbf7c8" />
 
 replace the void main() function:
-```void main() async { 
+```
+void main() async { 
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); 
   runApp(const QuizApp());
 }
 ```
+import : ```import 'package:firebase_core/firebase_core.dart';```
 <img width="856" height="261" alt="image" src="https://github.com/user-attachments/assets/a6fb4851-fc42-4dc6-be6f-83816b02a608" />
 
 
