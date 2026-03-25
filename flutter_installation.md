@@ -98,6 +98,6 @@ flutter doctor -v
 | `flutter clean` | Clears build cache (Fixes many errors) |
 | `flutter pub get` | Downloads app dependencies |
 | `flutter run` | Launches the app on a connected device |
-```
+
 
 
