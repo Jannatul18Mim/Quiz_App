@@ -10,10 +10,10 @@
 1. **Download:** Get the latest Flutter SDK from [flutter.dev](https://docs.flutter.dev/get-started/install/windows).
 2. **Extract:** Extract the zip file into a simple path like `C:\src\flutter` (Avoid `C:\Program Files` as it requires admin privileges).
 3. **Set Environment Path:**
-   - Search for **"Edit the system environment variables"** in Windows Start.
+   - Search for **"Edit the system environment variables"** in Windows Start.<br>
      <img width="541" height="569" alt="image" src="https://github.com/user-attachments/assets/53a86305-133e-4ddf-ae3c-8d9fd0e8b4b2" />
 
-   - Click **Environment Variables**.
+   - Click **Environment Variables**.<br>
      <img width="684" height="759" alt="image" src="https://github.com/user-attachments/assets/d05a837b-805e-4134-801a-5417f3268d63" />
 
    - Under **User variables**, find the **Path** variable and click **Edit**.
@@ -57,6 +57,8 @@ Before building apps, you must accept the Android licenses.
 ## 💻 Step 4: Desktop Development (Visual Studio)
 To build Flutter apps for Windows Desktop, you need the C++ workload.
 1. **Download:** [Visual Studio Community](https://visualstudio.microsoft.com/downloads/).
+   <img width="1278" height="496" alt="image" src="https://github.com/user-attachments/assets/ee0ad5ea-0481-4bf9-a5a0-581f21e1de40" />
+
 2. **Installer Selection:** - During installation, select the checkbox for **"Desktop development with C++"**.
    - This installs the necessary MSVC v143 build tools and Windows SDK.
 
