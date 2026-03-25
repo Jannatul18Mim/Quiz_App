@@ -11,9 +11,15 @@
 2. **Extract:** Extract the zip file into a simple path like `C:\src\flutter` (Avoid `C:\Program Files` as it requires admin privileges).
 3. **Set Environment Path:**
    - Search for **"Edit the system environment variables"** in Windows Start.
+     <img width="541" height="569" alt="image" src="https://github.com/user-attachments/assets/53a86305-133e-4ddf-ae3c-8d9fd0e8b4b2" />
+
    - Click **Environment Variables**.
+     <img width="684" height="759" alt="image" src="https://github.com/user-attachments/assets/d05a837b-805e-4134-801a-5417f3268d63" />
+
    - Under **User variables**, find the **Path** variable and click **Edit**.
-   - Click **New** and paste the path to your Flutter bin folder: `C:\flutter\bin`.
+   - Click **New** and paste the path to your Flutter bin folder: `C:\flutter\bin`[Your bin file path].
+     <img width="608" height="164" alt="image" src="https://github.com/user-attachments/assets/6e4f570a-2552-435b-8238-63394e480dd8" />
+
    - Click **OK** on all windows.
 
 ---
@@ -39,7 +45,7 @@
 
 ## 🛠️ Step 3: Android Toolchain & Licenses
 Before building apps, you must accept the Android licenses.
-1. Open your terminal (CMD or PowerShell).
+1. Open your terminal (CMD or PowerShell) or VS code.
 2. Run the following command:
    ```bash
    flutter doctor --android-licenses
