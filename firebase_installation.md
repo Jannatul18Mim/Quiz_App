@@ -12,6 +12,7 @@
 <img width="876" height="385" alt="image" src="https://github.com/user-attachments/assets/e1eda348-51a6-40c7-be14-84972860a254" />
 ## copy the namespace and paste it into company name <br>
 <img width="904" height="732" alt="image" src="https://github.com/user-attachments/assets/b679ef52-703d-4dec-aed6-20739330c4b8" />
+
 ## download the json file. copy and paste it into androi-> app. [Right click on the app]
 ## click next<br>
 
