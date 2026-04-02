@@ -43,7 +43,10 @@ void main() async {
   runApp(const QuizApp());
 }
 ```
-import : ```import 'package:firebase_core/firebase_core.dart';```
+import :
+```
+import 'package:firebase_core/firebase_core.dart';
+```
 <img width="856" height="261" alt="image" src="https://github.com/user-attachments/assets/a6fb4851-fc42-4dc6-be6f-83816b02a608" />
 
 
