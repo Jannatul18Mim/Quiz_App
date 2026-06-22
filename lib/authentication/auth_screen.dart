@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../dashboard.dart';
@@ -60,11 +61,140 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  void _showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
+    );
+  }
+
+  Future<void> _signUpWithEmailPassword() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      _showMessage("Please enter name, email and password.");
+      return;
+    }
+
+    try {
+      final UserCredential credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      final user = credential.user;
+      if (user == null) {
+        _showMessage("Unable to create user. Please try again.");
+        return;
+      }
+
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'name': name,
+        'email': email,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        _navigateToDashboard();
+      }
+    } on FirebaseAuthException catch (e) {
+      final message = switch (e.code) {
+        'email-already-in-use' => 'This email is already in use.',
+        'invalid-email' => 'The email address is not valid.',
+        'weak-password' => 'The password is too weak.',
+        _ => 'Signup failed: ${e.message ?? e.code}',
+      };
+      _showMessage(message);
+    } catch (e) {
+      _showMessage('Signup failed. Please try again.');
+    }
+  }
+
+  Future<void> _signInWithEmailPassword() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showMessage("Please enter email and password.");
+      return;
+    }
+
+    try {
+      final UserCredential credential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      final user = credential.user;
+      if (user == null) {
+        _showMessage("Unable to sign in. Please try again.");
+        return;
+      }
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (userDoc.exists) {
+        if (mounted) {
+          _navigateToDashboard();
+        }
+      } else {
+        await FirebaseAuth.instance.signOut();
+        _showMessage("user not exist in database");
+      }
+    } on FirebaseAuthException catch (e) {
+      final message = switch (e.code) {
+        'user-disabled' => 'This user has been disabled.',
+        'user-not-found' => 'No user found for that email.',
+        'wrong-password' => 'Incorrect password.',
+        'invalid-email' => 'The email address is not valid.',
+        _ => 'Sign-in failed: ${e.message ?? e.code}',
+      };
+      _showMessage(message);
+    } catch (e) {
+      _showMessage('Sign-in failed. Please try again.');
+    }
+  }
+
+  Future<void> _handleMainAction() async {
+    FocusScope.of(context).unfocus();
+
+    if (isLoading) return;
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      if (isSignIn) {
+        await _signInWithEmailPassword();
+      } else {
+        await _signUpWithEmailPassword();
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
   void _navigateToDashboard() {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const DashboardScreen()),
     );
+  }
+
+  void _handleGoogleSignInResult(bool isLogged) {
+    if (isLogged) {
+      _navigateToDashboard();
+      return;
+    }
+
+    _showMessage("Google sign-in failed.");
   }
 
   @override
@@ -146,24 +276,30 @@ class _AuthScreenState extends State<AuthScreen> {
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Add your email/password authentication logic here
-                    _navigateToDashboard();
-                  },
+                  onPressed: isLoading ? null : _handleMainAction,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2B65EC),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: Text(
-                    isSignIn ? "Sign In" : "Create Account",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          isSignIn ? "Sign In" : "Create Account",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
 
@@ -178,18 +314,11 @@ class _AuthScreenState extends State<AuthScreen> {
                       ? null
                       : () async {
                           setState(() => isLoading = true);
-                          bool isLogged = await login();
-                          setState(() => isLoading = false);
+                          final bool isLogged = await login();
 
-                          if (isLogged && mounted) {
-                            _navigateToDashboard();
-                          } else if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Google sign-in failed."),
-                              ),
-                            );
-                          }
+                          if (!mounted) return;
+                          setState(() => isLoading = false);
+                          _handleGoogleSignInResult(isLogged);
                         },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.grey[300]!),

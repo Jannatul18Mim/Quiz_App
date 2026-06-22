@@ -1,6 +1,8 @@
 
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/quizzes/classes.dart';
+import 'package:flutter_application_1/quizzes/classes.dart'; // Ensure ClassesPage matches here
+import 'package:flutter_application_1/profile.dart';
+import 'package:flutter_application_1/ai_chat_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   static const routeName = '/';
@@ -13,11 +15,11 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
 
-  // Define your pages here
+  // Synchronized list mapping directly to bottom navigation bar items
   static const List<Widget> _pages = <Widget>[
-    DashboardContent(), // Your current dashboard content
-    ClassesPage(), // Quizzes page
-    ProfilePage(), // Profile page
+    DashboardContent(),
+    ClassesPage(), // Make sure this widget is correctly exported from your classes.dart file
+    ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
@@ -29,23 +31,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: IndexedStack(index: _selectedIndex, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex, // Add this to track current selection
+        currentIndex: _selectedIndex,
         selectedItemColor: const Color(0xFF4A148C),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.quiz), label: 'Quizzes'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
-        onTap: _onItemTapped, // Don't pass context here
+        onTap: _onItemTapped,
       ),
     );
   }
 }
 
-// Extract your existing dashboard content into a separate widget
 class DashboardContent extends StatelessWidget {
   const DashboardContent({super.key});
 
@@ -111,6 +112,7 @@ class DashboardContent extends StatelessWidget {
                   Icons.calendar_today,
                 ),
                 const SizedBox(height: 24),
+
                 // Manage Quizzes
                 const Text(
                   'Manage Quizzes',
@@ -143,7 +145,8 @@ class DashboardContent extends StatelessWidget {
                   Icons.bar_chart,
                 ),
                 const SizedBox(height: 24),
-                // Study Zone
+
+                // Study Zone Section
                 const Text(
                   'Study Zone',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -160,15 +163,26 @@ class DashboardContent extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildCard(
-                        'Results',
-                        'Recent attempt history',
-                        Icons.group,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AIChatScreen(),
+                            ),
+                          );
+                        },
+                        child: _buildCard(
+                          'AI Tutor Help',
+                          'Ask short questions instantly',
+                          Icons.auto_awesome,
+                        ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
+
                 // Menu Section
                 _buildMenuSection(),
               ],
@@ -253,43 +267,6 @@ class DashboardContent extends StatelessWidget {
             style: TextStyle(fontSize: 12, color: Colors.grey[600]),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Create placeholder pages for other tabs
-class QuizzesPage extends StatelessWidget {
-  const QuizzesPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quizzes'),
-        backgroundColor: const Color(0xFF4A148C),
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text('Quizzes Page', style: TextStyle(fontSize: 24)),
-      ),
-    );
-  }
-}
-
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: const Color(0xFF4A148C),
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text('Profile Page', style: TextStyle(fontSize: 24)),
       ),
     );
   }
