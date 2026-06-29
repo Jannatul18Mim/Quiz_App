@@ -14,9 +14,8 @@ class _AIChatScreenState extends State<AIChatScreen> {
   final List<Map<String, String>> _messages = [];
   bool _isLoading = false;
 
-  static const String _apiKey = String.fromEnvironment(
-    'API_KEY',
-  ); // 🚀 REPLACE WITH YOUR API KEY
+  // static const String _apiKey = '';
+  static const _apiKey = String.fromEnvironment('GEMINI_API_KEY');
   late final GenerativeModel _model;
 
   @override

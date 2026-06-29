@@ -1,272 +1,570 @@
-
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/quizzes/classes.dart'; // Ensure ClassesPage matches here
 import 'package:flutter_application_1/profile.dart';
-import 'package:flutter_application_1/ai_chat_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'ai_chat_screen.dart';
+import '../meetings/meeting_preview_screen.dart';
+import 'meetings/join_meeting_screen.dart';
+import 'meetings/schedule_meeting_screen.dart';
+import 'quizzes/create_quiz_screen.dart';
+import 'quizzes/my_list_screen.dart';
+import 'quizzes/join_quiz_screen.dart';
+import 'quizzes/user_quiz_browse_screen.dart';
+import 'quizzes/quiz_owner_results_screen.dart';
+import 'quizzes/info_screen.dart';
+import 'user_report_screen.dart';
 
-class DashboardScreen extends StatefulWidget {
-  static const routeName = '/';
-  const DashboardScreen({super.key});
+class MainDashboardScreen extends StatefulWidget {
+  const MainDashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  State<MainDashboardScreen> createState() => _MainDashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _MainDashboardScreenState extends State<MainDashboardScreen> {
   int _selectedIndex = 0;
 
-  // Synchronized list mapping directly to bottom navigation bar items
-  static const List<Widget> _pages = <Widget>[
-    DashboardContent(),
-    ClassesPage(), // Make sure this widget is correctly exported from your classes.dart file
-    ProfilePage(),
+  final List<Widget> _pages = [
+    const UserDashboard(),
+    const UserQuizBrowseScreen(),
+    const ProfilePage(),
   ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _pages),
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF4A148C),
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF5C46BD),
+        unselectedItemColor: Colors.grey[500],
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+        ),
+        unselectedLabelStyle: const TextStyle(fontSize: 13),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.quiz), label: 'Quizzes'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.quiz_outlined),
+            activeIcon: Icon(Icons.quiz),
+            label: 'Quizzes',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
-        onTap: _onItemTapped,
       ),
     );
   }
 }
 
-class DashboardContent extends StatelessWidget {
-  const DashboardContent({super.key});
+class UserDashboard extends StatelessWidget {
+  const UserDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          // Header
-          Container(
-            color: const Color(0xFF4A148C),
-            padding: const EdgeInsets.only(
-              top: 50,
-              bottom: 20,
-              left: 20,
-              right: 20,
-            ),
-            width: double.infinity,
-            child: const Text(
-              'QuizAid',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+    return Scaffold(
+      backgroundColor: const Color(0xFFFAFAFE),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 50),
+
+            // --- QuizAid ব্যানার ---
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                width: double.infinity,
+                height: 160,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEF2FA),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: const Center(
+                  child: Text(
+                    'QuizAid',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111E38),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-          // Main Content
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Meeting Zone
-                const Text(
-                  'Meeting Zone',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCard(
-                        'New Meeting',
-                        'Start an instant room',
-                        Icons.add,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildCard(
-                        'Join Meeting',
-                        'Use meeting ID or link',
-                        Icons.people,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildCard(
-                  'Schedule Meeting',
-                  'Plan sessions ahead with students',
-                  Icons.calendar_today,
-                ),
-                const SizedBox(height: 24),
 
-                // Manage Quizzes
-                const Text(
-                  'Manage Quizzes',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCard(
-                        'Create Quiz',
-                        'Build a new question set',
-                        Icons.add,
-                      ),
+            // --- Meeting Zone ---
+            _buildSectionTitle('Meeting Zone'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildGridCard(
+                      icon: Icons.add,
+                      title: 'New Meeting',
+                      subtitle: 'Start an instant room',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MeetingPreviewScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildCard(
-                        'My List',
-                        'All created quizzes',
-                        Icons.list,
-                      ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _buildGridCard(
+                      icon: Icons.download_rounded,
+                      title: 'Join Meeting',
+                      subtitle: 'Use meeting ID or link',
+                      iconBgColor: const Color(0xFF5C46BD),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const JoinMeetingScreen(),
+                          ),
+                        );
+                      },
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildCard(
-                  'Reports',
-                  'View performance insights',
-                  Icons.bar_chart,
-                ),
-                const SizedBox(height: 24),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
 
-                // Study Zone Section
-                const Text(
-                  'Study Zone',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCard(
-                        'Questions Bank',
-                        'Practice by topic',
-                        Icons.book,
-                      ),
+            // Schedule Meeting
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ScheduleMeetingScreen(),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AIChatScreen(),
+                  );
+                },
+
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F5FC),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Schedule Meeting',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF111E38),
+                              ),
                             ),
-                          );
-                        },
-                        child: _buildCard(
-                          'AI Tutor Help',
-                          'Ask short questions instantly',
-                          Icons.auto_awesome,
+                            const SizedBox(height: 4),
+                            Text(
+                              'Plan sessions ahead with students',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF5C46BD),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.calendar_month,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // --- Manage Quizzes ---
+            _buildSectionTitle('Manage Quizzes'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildGridCard(
+                      icon: Icons.add,
+                      title: 'Create Quiz',
+                      subtitle: 'Build a new question set',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CreateQuizScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _buildGridCard(
+                      icon: Icons.link,
+                      title: 'Join Quiz',
+                      subtitle: 'Use a quiz join link',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const JoinQuizScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildGridCard(
+                      icon: Icons.bar_chart_rounded,
+                      title: 'My Results',
+                      subtitle: 'View quiz join results',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const QuizOwnerResultsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _buildGridCard(
+                      icon: Icons.list_alt_rounded,
+                      title: 'My List',
+                      subtitle: 'All created quizzes',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MyListScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // --- Study Zone ---
+            _buildSectionTitle('Study Zone'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildGridCard(
+                      icon: Icons.bar_chart_rounded,
+                      title: 'Reports',
+                      subtitle: 'View performance & analytics',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const UserReportScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _buildGridCard(
+                      icon: Icons.auto_awesome,
+                      title: 'AI Tutor Help',
+                      subtitle: 'Ask short questions instantly',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AIChatScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 25),
+
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF192231),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  children: [
+                    _buildDarkTile(
+                      context,
+                      'About Us',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const InfoScreen(
+                              title: 'About Us',
+                              body:
+                                  'QuizAid is a smart quiz platform for students and teachers. Create quizzes, share join links, and track results securely.',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildDarkTile(
+                      context,
+                      'FAQ',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const InfoScreen(
+                              title: 'FAQ',
+                              body:
+                                  'Q: How do I join a quiz?\nA: Use the Join Quiz screen and paste the link or code.\n\nQ: Can many people join?\nA: Yes, the same quiz link supports many participants.',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildDarkTile(
+                      context,
+                      'Contact Us',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const InfoScreen(
+                              title: 'Contact Us',
+                              body:
+                                  'For assistance, email support@quizapp.example.com or call +123-456-7890. Our team is ready to help.',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildDarkTile(
+                      context,
+                      'Help and Support',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const InfoScreen(
+                              title: 'Help and Support',
+                              body:
+                                  'Visit our Help Center for user guides, troubleshooting, and support resources. Use in-app support for faster help.',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildDarkTile(
+                      context,
+                      'Privacy Policy',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const InfoScreen(
+                              title: 'Privacy Policy',
+                              body:
+                                  'We protect your data. Quiz participation details are stored securely and only shared with quiz creators when needed.',
+                            ),
+                          ),
+                        );
+                      },
+                      isLast: true,
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
 
-                // Menu Section
-                _buildMenuSection(),
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 20.0, top: 24, bottom: 12),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF6B7280),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGridCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    Color iconBgColor = const Color(0xFF5C46BD),
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        height: 155,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF2F5FC),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: Colors.white, size: 20),
+            ),
+            const SizedBox(height: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF111E38),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    height: 1.2,
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildMenuSection() {
-    final List<String> menuItems = [
-      'About Us',
-      'FAQ',
-      'Contact Us',
-      'Help and Support',
-      'Privacy Policy',
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1F2C),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: menuItems.asMap().entries.map((entry) {
-          int index = entry.key;
-          String title = entry.value;
-          return Column(
-            children: [
-              ListTile(
-                title: Text(
-                  title,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                ),
-                trailing: const Icon(
-                  Icons.chevron_right,
-                  color: Colors.white70,
-                ),
-                onTap: () {},
-              ),
-              if (index < menuItems.length - 1)
-                const Divider(
-                  color: Colors.white12,
-                  height: 1,
-                  indent: 16,
-                  endIndent: 16,
-                ),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildCard(String title, String subtitle, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: Color(0xFF5E35B1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: Colors.white),
+  Widget _buildDarkTile(
+    BuildContext context,
+    String title, {
+    VoidCallback? onTap,
+    bool isLast = false,
+  }) {
+    return Column(
+      children: [
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 4,
           ),
-          const SizedBox(height: 12),
-          Text(
+          onTap: onTap,
+          title: Text(
             title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          trailing: const Icon(
+            Icons.arrow_forward_ios,
+            color: Colors.white70,
+            size: 16,
           ),
-        ],
+        ),
+        if (!isLast)
+          const Divider(
+            color: Colors.white10,
+            height: 1,
+            indent: 20,
+            endIndent: 20,
+          ),
+      ],
+    );
+  }
+}
+
+class SelectQuizScreen extends StatelessWidget {
+  const SelectQuizScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF5C46BD),
+        title: const Text('Quizzes'),
+      ),
+      body: const Center(
+        child: Text('Select a quiz category', style: TextStyle(fontSize: 18)),
       ),
     );
   }

@@ -64,8 +64,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '559880713537',
     projectId: 'quizapp-f2190',
     storageBucket: 'quizapp-f2190.firebasestorage.app',
-    androidClientId: '559880713537-5tuc2f0m79vfh97br2ufda8jo9bpo2av.apps.googleusercontent.com',
-    iosClientId: '559880713537-np5cst2gnq98l0op4ntpb06fr955fq92.apps.googleusercontent.com',
+    androidClientId:
+        '559880713537-5tuc2f0m79vfh97br2ufda8jo9bpo2av.apps.googleusercontent.com',
+    iosClientId:
+        '559880713537-np5cst2gnq98l0op4ntpb06fr955fq92.apps.googleusercontent.com',
     iosBundleId: 'com.example.flutterApplication1',
   );
 
@@ -75,8 +77,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '559880713537',
     projectId: 'quizapp-f2190',
     storageBucket: 'quizapp-f2190.firebasestorage.app',
-    androidClientId: '559880713537-5tuc2f0m79vfh97br2ufda8jo9bpo2av.apps.googleusercontent.com',
-    iosClientId: '559880713537-np5cst2gnq98l0op4ntpb06fr955fq92.apps.googleusercontent.com',
+    androidClientId:
+        '559880713537-5tuc2f0m79vfh97br2ufda8jo9bpo2av.apps.googleusercontent.com',
+    iosClientId:
+        '559880713537-np5cst2gnq98l0op4ntpb06fr955fq92.apps.googleusercontent.com',
     iosBundleId: 'com.example.flutterApplication1',
   );
 

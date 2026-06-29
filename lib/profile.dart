@@ -1,45 +1,46 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_application_1/dashboard.dart';
-import 'package:flutter_application_1/authentication/auth_screen.dart'; // <--- ADD THIS IMPORT
+﻿import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_application_1/authentication/auth_screen.dart';
+import 'user_report_screen.dart';
+import 'edit_profile_screen.dart';
+import 'settings_screen.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
-      backgroundColor: const Color(
-        0xFFF7F9FC,
-      ), // Light background color from design
+      backgroundColor: const Color(0xFFF7F9FC),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const SizedBox(height: 60), // Spacing for status bar
-            // Screen Title
+            const SizedBox(height: 60),
             const Text(
               'Profile',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 26,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF1A1F2C),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 25),
 
-            // Profile Avatar (Semi-circle design wrapper or alternative representation)
             Center(
               child: Container(
                 width: 140,
                 height: 140,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Color(0xFFFFD54F), // Amber background color
+                  color: Colors.amber[200],
                 ),
                 child: ClipOval(
                   child: Center(
                     child: Icon(
                       Icons.person,
-                      size: 80,
+                      size: 90,
                       color: Colors.brown[400],
                     ),
                   ),
@@ -48,10 +49,9 @@ class ProfilePage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Name & Email
-            const Text(
-              'Jannatul Mim',
-              style: TextStyle(
+            Text(
+              user?.displayName ?? 'Jannatul Mim',
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF1A1F2C),
@@ -59,86 +59,65 @@ class ProfilePage extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'jannatul.mim@example.com',
+              user?.email ?? 'jannatul.mim@example.com',
               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
             const SizedBox(height: 30),
 
-            // Profile Options Options
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
                   _buildProfileTile(
-                    icon: Icons.edit,
-                    iconColor: Colors.orange,
+                    icon: Icons.edit_outlined,
+                    iconColor: Colors.orangeAccent,
                     iconBgColor: Colors.orange[50]!,
                     title: 'Edit Profile',
-                    onTap: () {},
+                    subtitle: 'Update your account details',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EditProfileScreen(),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
                   _buildProfileTile(
-                    icon: Icons.settings,
+                    icon: Icons.settings_outlined,
                     iconColor: Colors.teal,
                     iconBgColor: Colors.teal[50]!,
                     title: 'Settings',
-                    onTap: () {},
+                    subtitle: 'Language, theme, notifications',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
                   _buildProfileTile(
-                    icon: Icons.privacy_tip_outlined,
-                    iconColor: Colors.blue,
-                    iconBgColor: Colors.blue[50]!,
-                    title: 'Privacy Policy',
-                    subtitle: 'Control data & permissions',
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 16),
-                  _buildProfileTile(
-                    icon: Icons.info_outline,
-                    iconColor: Colors.blueGrey,
-                    iconBgColor: Colors.yellow[50]!,
-                    title: 'About Us',
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Logout Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        // This clears the navigation stack and pushes the AuthScreen
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AuthScreen(),
-                          ), // Replace with your actual Sign-In class name if different
-                          (route) =>
-                              false, // This line removes all previous screens from history
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                          color: Colors.redAccent,
-                          width: 1,
+                    icon: Icons.logout,
+                    iconColor: Colors.red,
+                    iconBgColor: Colors.red[50]!,
+                    title: 'Logout',
+                    subtitle: 'Sign out of your account',
+                    onTap: () async {
+                      await FirebaseAuth.instance.signOut();
+                      if (!context.mounted) return;
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AuthScreen(),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: const Text(
-                        'Logout',
-                        style: TextStyle(
-                          color: Colors.redAccent,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
+                        (route) => false,
+                      );
+                    },
                   ),
-                  const SizedBox(height: 30),
                 ],
               ),
             ),
@@ -148,14 +127,13 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // Helper builder widget for modern look list items
   Widget _buildProfileTile({
     required IconData icon,
     required Color iconColor,
     required Color iconBgColor,
     required String title,
     String? subtitle,
-    required VoidCallback onTap,
+    VoidCallback? onTap,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -164,7 +142,7 @@ class ProfilePage extends StatelessWidget {
         border: Border.all(color: Colors.grey[200]!, width: 1),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
@@ -184,10 +162,14 @@ class ProfilePage extends StatelessWidget {
         subtitle: subtitle != null
             ? Text(
                 subtitle,
-                style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                style: TextStyle(color: Colors.grey[500], fontSize: 14),
               )
             : null,
-        trailing: Icon(Icons.chevron_right, color: Colors.grey[400]),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: Colors.grey[400],
+        ),
         onTap: onTap,
       ),
     );

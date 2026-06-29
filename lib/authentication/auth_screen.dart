@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../dashboard.dart';
+import '../admin/admin_dashboard.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -14,10 +16,27 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   bool isSignIn = true;
   bool isLoading = false;
+  bool rememberMe = false;
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
   late TextEditingController _nameController;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
+
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+
+    if (email.isEmpty) {
+      _showMessage("Please enter your email first.");
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      _showMessage("Password reset link sent to your email.");
+    } catch (e) {
+      _showMessage("Failed to send reset email.");
+    }
+  }
 
   @override
   void initState() {
@@ -36,23 +55,54 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
-  // --- CORRECTED LOGIN LOGIC ---
+  // --- GOOGLE LOGIN LOGIC ---
   Future<bool> login() async {
     try {
-      final GoogleSignInAccount? user = await _googleSignIn.signIn();
+      final UserCredential userCredential;
 
-      if (user == null) {
-        debugPrint("Google Sign-In cancelled by user");
-        return false;
+      if (kIsWeb) {
+        final googleProvider = GoogleAuthProvider();
+        userCredential = await FirebaseAuth.instance.signInWithPopup(
+          googleProvider,
+        );
+      } else {
+        final GoogleSignInAccount? user = await _googleSignIn.signIn();
+
+        if (user == null) {
+          debugPrint("Google Sign-In cancelled by user");
+          return false;
+        }
+
+        final GoogleSignInAuthentication userAuth = await user.authentication;
+
+        final AuthCredential credential = GoogleAuthProvider.credential(
+          idToken: userAuth.idToken,
+          accessToken: userAuth.accessToken,
+        );
+
+        userCredential = await FirebaseAuth.instance.signInWithCredential(
+          credential,
+        );
       }
 
-      final GoogleSignInAuthentication userAuth = await user.authentication;
+      if (userCredential.user != null) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .get();
 
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        idToken: userAuth.idToken,
-      );
-
-      await FirebaseAuth.instance.signInWithCredential(credential);
+        if (!userDoc.exists) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userCredential.user!.uid)
+              .set({
+                'name': userCredential.user!.displayName ?? 'No Name',
+                'email': userCredential.user!.email,
+                'role': 'user',
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+        }
+      }
 
       return FirebaseAuth.instance.currentUser != null;
     } catch (e) {
@@ -69,6 +119,43 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  // --- ROLE BASED ROUTING ---
+  Future<void> _checkRoleAndNavigate(String uid) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+
+      if (!mounted) return;
+
+      if (userDoc.exists) {
+        final data = userDoc.data();
+        final String role = data?['role'] ?? 'user';
+
+        if (role == 'admin') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const AdminDashboard()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MainDashboardScreen(),
+            ),
+          );
+        }
+      } else {
+        await FirebaseAuth.instance.signOut();
+        _showMessage("User data not found in database.");
+      }
+    } catch (e) {
+      _showMessage("Error checking user role.");
+    }
+  }
+
+  // --- EMAIL/PASSWORD SIGN UP ---
   Future<void> _signUpWithEmailPassword() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
@@ -92,11 +179,12 @@ class _AuthScreenState extends State<AuthScreen> {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'name': name,
         'email': email,
+        'role': 'user',
         'createdAt': FieldValue.serverTimestamp(),
       });
 
       if (mounted) {
-        _navigateToDashboard();
+        _checkRoleAndNavigate(user.uid);
       }
     } on FirebaseAuthException catch (e) {
       final message = switch (e.code) {
@@ -111,6 +199,7 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  // --- EMAIL/PASSWORD SIGN IN ---
   Future<void> _signInWithEmailPassword() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -130,18 +219,8 @@ class _AuthScreenState extends State<AuthScreen> {
         return;
       }
 
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-
-      if (userDoc.exists) {
-        if (mounted) {
-          _navigateToDashboard();
-        }
-      } else {
-        await FirebaseAuth.instance.signOut();
-        _showMessage("user not exist in database");
+      if (mounted) {
+        _checkRoleAndNavigate(user.uid);
       }
     } on FirebaseAuthException catch (e) {
       final message = switch (e.code) {
@@ -162,9 +241,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
     if (isLoading) return;
 
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
 
     try {
       if (isSignIn) {
@@ -174,26 +251,19 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     } finally {
       if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
+        setState(() => isLoading = false);
       }
     }
   }
 
-  void _navigateToDashboard() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const DashboardScreen()),
-    );
-  }
-
   void _handleGoogleSignInResult(bool isLogged) {
     if (isLogged) {
-      _navigateToDashboard();
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        _checkRoleAndNavigate(currentUser.uid);
+      }
       return;
     }
-
     _showMessage("Google sign-in failed.");
   }
 
@@ -267,6 +337,35 @@ class _AuthScreenState extends State<AuthScreen> {
                 decoration: const InputDecoration(
                   hintText: "Enter your password",
                 ),
+              ),
+              const SizedBox(height: 20),
+
+              // --- Remember Me + Forgot Password ---
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 10,
+                runSpacing: 5,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Checkbox(
+                        value: rememberMe,
+                        onChanged: (value) {
+                          setState(() {
+                            rememberMe = value ?? false;
+                          });
+                        },
+                      ),
+                      const Text("Remember Me"),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: _resetPassword,
+                    child: const Text("Forgot Password?"),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 30),
